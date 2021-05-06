@@ -1,0 +1,4 @@
+.vscode
+data/*
+!data/example.xlsx
+ttt_modules/__pycache__

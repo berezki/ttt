@@ -11,18 +11,39 @@ def load_from_xlsx_to_db(group):
     cursor = conn.cursor()
     wb = load_workbook(xlsx_file_path)
     
-    for sheet in range(0,2):
+    odd_and_even_ids = []
 
-        cursor.execute(f"CREATE TABLE IF NOT EXISTS table_{group}_{sheet} ('1' text, '2' text, '3' text, '4' text, '5' text, '6' text)")
+    for sheet in range(0,2):
+        week_ids = []
         wb.active = sheet
+        
+        time_st = [
+            '08:00-09:35',
+            '09:45-11:20',
+            '11:50-13:25',
+            '13:35-15:10',
+            '15:40-16:55',
+            '17:25-19:00',
+            '19:05-20:40',
+            '20:45-22:20'
+        ]
 
         for column in 'bcdefg':
-            cort = list()
+            schedule = {}
             for row in range(2,8):
-                cort.append(wb.active[f'{column}{row}'].value)
-            
-            cursor.execute(f'INSERT INTO table_{group}_{sheet} VALUES (?,?,?,?,?,?)', cort)
+                schedule[time_st[row-2]] = wb.active[f'{column}{row}'].value
+            if schedule != {}:
+                cursor.execute(f"INSERT INTO day VALUES (?)", schedule)
+                week_ids.append(cursor.lastrowid)
+            else:
+                week_ids.append(None)
+
+        cursor.execute(f"INSERT INTO week VALUES (?, ?, ?, ?, ?, ?)", week_ids)
+        odd_and_even_ids.append(cursor.lastrowid)
+        
+    cursor.execute(f"INSERT INTO time_table VALUES (?, ?)", odd_and_even_ids)
     conn.commit()
+    return cursor.lastrowid
 
 def week_is_even():
     return True if datetime.now().isocalendar()[1]%2 == 0 else False
